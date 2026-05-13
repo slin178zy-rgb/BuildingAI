@@ -434,7 +434,7 @@ export default function PublishChatPage() {
                   >
                     <ListIndentDecrease className="size-4 rotate-180" />
                   </Button>
-                  {assistantAvatar ? (
+                  {/* {assistantAvatar ? (
                     <Avatar className="size-8 shrink-0 rounded-lg after:rounded-lg">
                       <AvatarImage src={assistantAvatar} alt="" className="rounded-lg" />
                       <AvatarFallback className="rounded-lg">
@@ -445,7 +445,7 @@ export default function PublishChatPage() {
                     <span className="text-foreground truncate text-sm font-medium md:hidden">
                       {agent.name}
                     </span>
-                  ) : null}
+                  ) : null} */}
                 </div>
 
                 {formFields.length > 0 ? (
