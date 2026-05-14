@@ -6,7 +6,13 @@ import {
   useCreateAiProviderMutation,
   useUpdateAiProviderMutation,
 } from "@buildingai/services/console";
+import { Badge } from "@buildingai/ui/components/ui/badge";
 import { Button } from "@buildingai/ui/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@buildingai/ui/components/ui/collapsible";
 import {
   Combobox,
   ComboboxChip,
@@ -38,18 +44,13 @@ import {
 } from "@buildingai/ui/components/ui/form";
 import { ImageUpload } from "@buildingai/ui/components/ui/image-upload";
 import { Input } from "@buildingai/ui/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@buildingai/ui/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@buildingai/ui/components/ui/radio-group";
 import { ScrollArea } from "@buildingai/ui/components/ui/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@buildingai/ui/components/ui/select";
 import { Textarea } from "@buildingai/ui/components/ui/textarea";
+import { cn } from "@buildingai/ui/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FolderKey, Loader2 } from "lucide-react";
+import { Check, ChevronRight, ChevronsUpDown, FolderKey, Loader2 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -98,16 +99,24 @@ export const AiProviderFormDialog = ({
 
   const { data: secretTemplates } = useAllSecretTemplatesQuery();
 
-  const secrets = useMemo(() => {
+  const secretGroups = useMemo(() => {
     if (!secretTemplates) return [];
-    return secretTemplates.flatMap((template) =>
-      (template.Secrets || []).map((secret) => ({
-        id: secret.id,
-        name: secret.name,
-        templateName: template.name,
-      })),
-    );
+
+    return secretTemplates
+      .map((template) => ({
+        id: template.id,
+        name: template.name,
+        secrets: (template.Secrets || []).map((secret) => ({
+          id: secret.id,
+          name: secret.name,
+          templateId: template.id,
+          templateName: template.name,
+        })),
+      }))
+      .filter((group) => group.secrets.length > 0);
   }, [secretTemplates]);
+
+  const secrets = useMemo(() => secretGroups.flatMap((group) => group.secrets), [secretGroups]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema as any),
@@ -207,6 +216,39 @@ export const AiProviderFormDialog = ({
 
   const modelTypeAnchor = useComboboxAnchor();
   const [container, setContainer] = useState<HTMLElement | null>(null);
+  const [secretPopoverOpen, setSecretPopoverOpen] = useState(false);
+  const [openSecretTemplateId, setOpenSecretTemplateId] = useState<string | null>(null);
+  const selectedSecretItemRef = React.useRef<HTMLButtonElement | null>(null);
+
+  const selectedSecret = useMemo(
+    () => secrets.find((secret) => secret.id === bindSecretId),
+    [bindSecretId, secrets],
+  );
+
+  useEffect(() => {
+    if (!secretPopoverOpen || !selectedSecret) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      selectedSecretItemRef.current?.scrollIntoView({
+        block: "center",
+        inline: "nearest",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [secretPopoverOpen, selectedSecret, openSecretTemplateId]);
+
+  const handleSecretPopoverOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      setOpenSecretTemplateId(selectedSecret?.templateId ?? null);
+    }
+
+    setSecretPopoverOpen(nextOpen);
+  };
+
+  const handleSecretTemplateOpenChange = (templateId: string, nextOpen: boolean) => {
+    setOpenSecretTemplateId(nextOpen ? templateId : null);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -340,23 +382,133 @@ export const AiProviderFormDialog = ({
                         管理密钥
                       </Button>
                     </div>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="选择密钥配置" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {secrets.map((secret) => (
-                          <SelectItem key={secret.id} value={secret.id}>
-                            {secret.name}
-                            <span className="text-muted-foreground ml-2 text-xs">
-                              ({secret.templateName})
+                    <Popover open={secretPopoverOpen} onOpenChange={handleSecretPopoverOpenChange}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={secretPopoverOpen}
+                            className={cn(
+                              "w-full justify-between px-2.5 font-normal",
+                              !field.value && "text-muted-foreground",
+                            )}
+                          >
+                            <span className="min-w-0 truncate">
+                              {selectedSecret ? (
+                                <span className="flex min-w-0 items-center gap-2">
+                                  <span className="truncate">{selectedSecret.name}</span>
+                                  <span className="text-muted-foreground shrink-0 text-xs">
+                                    ({selectedSecret.templateName})
+                                  </span>
+                                </span>
+                              ) : (
+                                "选择密钥配置"
+                              )}
                             </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                            <ChevronsUpDown className="text-muted-foreground ml-2 shrink-0" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        align="start"
+                        container={container}
+                        className="max-h-80 w-(--radix-popover-trigger-width) gap-0 p-0"
+                      >
+                        <ScrollArea
+                          className="flex min-h-0 flex-1 flex-col rounded-lg"
+                          viewportClassName="[&>div]:block! [&>div]:flex-1"
+                        >
+                          <div className="flex flex-col gap-1 p-1">
+                            {secretGroups.length === 0 ? (
+                              <div className="text-muted-foreground px-3 py-6 text-center text-sm">
+                                暂无可绑定的密钥
+                              </div>
+                            ) : (
+                              secretGroups.map((group) => {
+                                const containsSelectedSecret = group.secrets.some(
+                                  (secret) => secret.id === field.value,
+                                );
+                                const isGroupOpen =
+                                  openSecretTemplateId === group.id ||
+                                  (openSecretTemplateId === null &&
+                                    secretPopoverOpen &&
+                                    containsSelectedSecret);
+
+                                return (
+                                  <Collapsible
+                                    key={group.id}
+                                    open={isGroupOpen}
+                                    onOpenChange={(nextOpen) =>
+                                      handleSecretTemplateOpenChange(group.id, nextOpen)
+                                    }
+                                    className="group/collapsible"
+                                  >
+                                    <CollapsibleTrigger asChild>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        className="h-9 w-full justify-start gap-2 px-2"
+                                      >
+                                        <ChevronRight className="text-muted-foreground transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                                        <span className="min-w-0 flex-1 truncate text-left">
+                                          {group.name}
+                                        </span>
+                                        <Badge variant="secondary" className="shrink-0">
+                                          {group.secrets.length}
+                                        </Badge>
+                                      </Button>
+                                    </CollapsibleTrigger>
+                                    <CollapsibleContent>
+                                      <div className="flex flex-col gap-0.5 py-1 pl-6">
+                                        {group.secrets.length === 0 ? (
+                                          <div className="text-muted-foreground px-2 py-2 text-xs">
+                                            该分组暂无密钥
+                                          </div>
+                                        ) : (
+                                          group.secrets.map((secret) => {
+                                            const isSelected = secret.id === field.value;
+
+                                            return (
+                                              <Button
+                                                key={secret.id}
+                                                ref={isSelected ? selectedSecretItemRef : undefined}
+                                                type="button"
+                                                variant="ghost"
+                                                className={cn(
+                                                  "h-8 w-full justify-start gap-2 px-2 font-normal",
+                                                  isSelected && "bg-muted text-foreground",
+                                                )}
+                                                onClick={() => {
+                                                  field.onChange(secret.id);
+                                                  setSecretPopoverOpen(false);
+                                                }}
+                                              >
+                                                <span className="min-w-0 flex-1 truncate text-left">
+                                                  {secret.name}
+                                                </span>
+                                                <Check
+                                                  data-icon="inline-end"
+                                                  className={cn(
+                                                    "ml-auto shrink-0",
+                                                    isSelected ? "opacity-100" : "opacity-0",
+                                                  )}
+                                                />
+                                              </Button>
+                                            );
+                                          })
+                                        )}
+                                      </div>
+                                    </CollapsibleContent>
+                                  </Collapsible>
+                                );
+                              })
+                            )}
+                          </div>
+                        </ScrollArea>
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}

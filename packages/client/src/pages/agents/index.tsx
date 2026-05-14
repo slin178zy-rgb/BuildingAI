@@ -222,60 +222,6 @@ const AgentsIndexPage = () => {
                 </InputGroup>
               </div>
             </div>
-
-            <div className="group relative mt-8 sm:px-3">
-              <div
-                className={cn(
-                  "from-background via-background/80 pointer-events-none absolute inset-y-0 left-0 z-10 flex w-24 items-center bg-linear-to-r to-transparent transition-opacity duration-300",
-                  canScrollTagsLeft ? "opacity-100" : "opacity-0",
-                )}
-              >
-                <Button
-                  type="button"
-                  size="icon-xs"
-                  className="border-border bg-background text-muted-foreground hover:bg-background hover:text-primary pointer-events-auto ml-2 flex size-8 items-center justify-center rounded-full border shadow-[0_10px_25px_-5px_rgba(0,0,0,0.08),0_8px_10px_-6px_rgba(0,0,0,0.05)] transition-all duration-200 hover:scale-110 active:scale-95"
-                  onClick={() => scrollTagsBy("left")}
-                >
-                  <ChevronLeft className="size-3.5 stroke-3" />
-                </Button>
-              </div>
-
-              <div
-                className={cn(
-                  "from-background via-background/80 pointer-events-none absolute inset-y-0 right-0 z-10 flex w-24 items-center justify-end bg-linear-to-l to-transparent transition-opacity duration-300",
-                  canScrollTagsRight ? "opacity-100" : "opacity-0",
-                )}
-              >
-                <Button
-                  type="button"
-                  size="icon-xs"
-                  className="border-border bg-background text-muted-foreground hover:bg-background hover:text-primary pointer-events-auto mr-2 flex size-8 items-center justify-center rounded-full border shadow-[0_10px_25px_-5px_rgba(0,0,0,0.08),0_8px_10px_-6px_rgba(0,0,0,0.05)] transition-all duration-200 hover:scale-110 active:scale-95"
-                  onClick={() => scrollTagsBy("right")}
-                >
-                  <ChevronRight className="size-3.5 stroke-3" />
-                </Button>
-              </div>
-
-              <div ref={tagScrollRef} className="no-scrollbar overflow-x-auto scroll-smooth py-2">
-                <div className="flex min-w-max flex-nowrap gap-2">
-                  <Badge
-                    className={badgeClass(selectedTagId === null)}
-                    onClick={() => setSelectedTagId(null)}
-                  >
-                    全部
-                  </Badge>
-                  {tags.map((tag) => (
-                    <Badge
-                      key={tag.id}
-                      className={badgeClass(isTagSelected(tag.id))}
-                      onClick={() => selectTag(tag.id)}
-                    >
-                      {tag.name}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </div>
           </div>
 
           {banners.length > 0 ? (
@@ -310,6 +256,60 @@ const AgentsIndexPage = () => {
               </CarouselContent>
             </Carousel>
           ) : null}
+
+          <div className="group relative mt-8 sm:px-3">
+            <div
+              className={cn(
+                "from-background via-background/80 pointer-events-none absolute inset-y-0 left-0 z-10 flex w-24 items-center bg-linear-to-r to-transparent transition-opacity duration-300",
+                canScrollTagsLeft ? "opacity-100" : "opacity-0",
+              )}
+            >
+              <Button
+                type="button"
+                size="icon-xs"
+                className="border-border bg-background text-muted-foreground hover:bg-background hover:text-primary pointer-events-auto ml-2 flex size-8 items-center justify-center rounded-full border shadow-[0_10px_25px_-5px_rgba(0,0,0,0.08),0_8px_10px_-6px_rgba(0,0,0,0.05)] transition-all duration-200 hover:scale-110 active:scale-95"
+                onClick={() => scrollTagsBy("left")}
+              >
+                <ChevronLeft className="size-3.5 stroke-3" />
+              </Button>
+            </div>
+
+            <div
+              className={cn(
+                "from-background via-background/80 pointer-events-none absolute inset-y-0 right-0 z-10 flex w-24 items-center justify-end bg-linear-to-l to-transparent transition-opacity duration-300",
+                canScrollTagsRight ? "opacity-100" : "opacity-0",
+              )}
+            >
+              <Button
+                type="button"
+                size="icon-xs"
+                className="border-border bg-background text-muted-foreground hover:bg-background hover:text-primary pointer-events-auto mr-2 flex size-8 items-center justify-center rounded-full border shadow-[0_10px_25px_-5px_rgba(0,0,0,0.08),0_8px_10px_-6px_rgba(0,0,0,0.05)] transition-all duration-200 hover:scale-110 active:scale-95"
+                onClick={() => scrollTagsBy("right")}
+              >
+                <ChevronRight className="size-3.5 stroke-3" />
+              </Button>
+            </div>
+
+            <div ref={tagScrollRef} className="no-scrollbar overflow-x-auto scroll-smooth py-2">
+              <div className="flex min-w-max flex-nowrap gap-2">
+                <Badge
+                  className={badgeClass(selectedTagId === null)}
+                  onClick={() => setSelectedTagId(null)}
+                >
+                  全部
+                </Badge>
+                {tags.map((tag) => (
+                  <Badge
+                    key={tag.id}
+                    className={badgeClass(isTagSelected(tag.id))}
+                    onClick={() => selectTag(tag.id)}
+                  >
+                    {tag.name}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </div>
 
           <div className="mt-6 sm:px-3">
             {squareQuery.isLoading ? (

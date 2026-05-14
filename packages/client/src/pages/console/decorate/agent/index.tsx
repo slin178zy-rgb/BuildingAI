@@ -436,6 +436,47 @@ const DecorateAgentIndexPage = () => {
             </div>
           </div>
 
+          <div className="group/carousel relative mt-8 w-full overflow-hidden rounded-2xl sm:rounded-4xl">
+            {banners.length > 0 ? (
+              <Carousel
+                className="w-full rounded-2xl sm:rounded-4xl"
+                plugins={[
+                  Autoplay({
+                    delay: 3000,
+                  }),
+                ]}
+              >
+                <CarouselContent>
+                  {banners.map((banner, index) => (
+                    <CarouselItem key={`${banner.imageUrl}-${index}`}>
+                      <AspectRatio ratio={4 / 1}>
+                        <img
+                          src={banner.imageUrl}
+                          alt={`agent-square-banner-${index + 1}`}
+                          className="h-full w-full rounded-2xl object-cover"
+                        />
+                      </AspectRatio>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+              </Carousel>
+            ) : (
+              <div className="bg-muted/30 flex aspect-20/5 flex-col items-center justify-center gap-2 rounded-2xl">
+                <p className="text-muted-foreground text-sm">
+                  {!config?.enabled ? "广告位未开启" : "暂无广告图，点击「设置装修位」添加"}
+                </p>
+              </div>
+            )}
+            <PermissionGuard permissions="agent-decorate:set">
+              <Button
+                className="absolute right-5 bottom-5 flex translate-y-2 scale-95 items-center gap-2 rounded-full px-5 opacity-100 transition-all duration-300 ease-out group-hover/carousel:translate-y-0 group-hover/carousel:scale-100 group-hover/carousel:opacity-100 active:scale-90 md:opacity-0"
+                onClick={() => setDecorateDialogOpen(true)}
+              >
+                <span className="flex items-center gap-2">设置装修位</span>
+              </Button>
+            </PermissionGuard>
+          </div>
+
           <div className="no-scrollbar mt-6 flex flex-nowrap gap-2 overflow-x-auto pt-2 sm:px-3">
             <div
               className="group relative inline-flex cursor-pointer"
@@ -487,47 +528,6 @@ const DecorateAgentIndexPage = () => {
                 <Plus />
               </Button>
             </div>
-          </div>
-
-          <div className="group/carousel relative mt-8 w-full overflow-hidden rounded-2xl sm:rounded-4xl">
-            {banners.length > 0 ? (
-              <Carousel
-                className="w-full rounded-2xl sm:rounded-4xl"
-                plugins={[
-                  Autoplay({
-                    delay: 3000,
-                  }),
-                ]}
-              >
-                <CarouselContent>
-                  {banners.map((banner, index) => (
-                    <CarouselItem key={`${banner.imageUrl}-${index}`}>
-                      <AspectRatio ratio={4 / 1}>
-                        <img
-                          src={banner.imageUrl}
-                          alt={`agent-square-banner-${index + 1}`}
-                          className="h-full w-full rounded-2xl object-cover"
-                        />
-                      </AspectRatio>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-              </Carousel>
-            ) : (
-              <div className="bg-muted/30 flex aspect-20/5 flex-col items-center justify-center gap-2 rounded-2xl">
-                <p className="text-muted-foreground text-sm">
-                  {!config?.enabled ? "广告位未开启" : "暂无广告图，点击「设置装修位」添加"}
-                </p>
-              </div>
-            )}
-            <PermissionGuard permissions="agent-decorate:set">
-              <Button
-                className="absolute right-5 bottom-5 flex translate-y-2 scale-95 items-center gap-2 rounded-full px-5 opacity-100 transition-all duration-300 ease-out group-hover/carousel:translate-y-0 group-hover/carousel:scale-100 group-hover/carousel:opacity-100 active:scale-90 md:opacity-0"
-                onClick={() => setDecorateDialogOpen(true)}
-              >
-                <span className="flex items-center gap-2">设置装修位</span>
-              </Button>
-            </PermissionGuard>
           </div>
 
           <div className="mt-6 sm:px-3">

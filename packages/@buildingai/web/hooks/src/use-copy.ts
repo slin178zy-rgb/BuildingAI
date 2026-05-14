@@ -20,7 +20,7 @@ export function useCopy() {
 
     const copy = async (text: string) => {
         if (!text) {
-            toast.error("No content to copy");
+            toast.error("没有内容可复制");
             return false;
         }
 
@@ -28,7 +28,7 @@ export function useCopy() {
 
         try {
             await navigator.clipboard.writeText(text);
-            toast.success("Copied to clipboard");
+            toast.success("已复制到剪贴板");
             return true;
         } catch (error) {
             // Fallback for older browsers
@@ -51,14 +51,14 @@ export function useCopy() {
                 document.body.removeChild(textArea);
 
                 if (result) {
-                    toast.success("Copied to clipboard");
+                    toast.success("已复制到剪贴板");
                     return true;
                 } else {
-                    toast.error("Failed to copy");
+                    toast.error("复制失败");
                     return false;
                 }
             } catch (fallbackError) {
-                toast.error(`Failed to copy: ${fallbackError}`);
+                toast.error(`复制失败: ${fallbackError}`);
                 return false;
             }
         } finally {
