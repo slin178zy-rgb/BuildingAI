@@ -1,6 +1,5 @@
 import { getProvider } from "@buildingai/ai-sdk";
 import { BaseController } from "@buildingai/base";
-import { BusinessCode } from "@buildingai/constants/shared/business-code.constant";
 import { SecretService } from "@buildingai/core/modules";
 import { BuildFileUrl } from "@buildingai/decorators/file-url.decorator";
 import { HttpErrorFactory } from "@buildingai/errors";
@@ -126,17 +125,9 @@ export class AiProviderConsoleController extends BaseController {
         name: "删除AI供应商",
     })
     async remove(@Param("id") id: string) {
-        // 检查是否为内置供应商
         const provider = await this.aiProviderService.findOneById(id);
         if (!provider) {
             throw HttpErrorFactory.business("AI供应商不存在");
-        }
-
-        if (provider.isBuiltIn) {
-            throw HttpErrorFactory.business(
-                "系统内置供应商不允许删除",
-                BusinessCode.OPERATION_NOT_ALLOWED,
-            );
         }
 
         await this.aiProviderService.deleteProvider(id);
@@ -153,19 +144,9 @@ export class AiProviderConsoleController extends BaseController {
         hidden: true,
     })
     async removeMany(@Body("ids") ids: string[]) {
-        // 批量检查是否包含内置供应商
         const providers = await Promise.all(
             ids.map((id) => this.aiProviderService.findOneById(id)),
         );
-
-        const builtInProviders = providers.filter((provider) => provider?.isBuiltIn);
-        if (builtInProviders.length > 0) {
-            const builtInNames = builtInProviders.map((p) => p.name).join("、");
-            throw HttpErrorFactory.business(
-                `以下系统内置供应商不允许删除：${builtInNames}`,
-                BusinessCode.OPERATION_NOT_ALLOWED,
-            );
-        }
 
         // 过滤掉不存在的供应商 ID
         const validIds = providers

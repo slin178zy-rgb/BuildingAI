@@ -1,7 +1,9 @@
 import { BaseService, FieldFilterOptions } from "@buildingai/base";
+import { AI_DEFAULT_MODEL } from "@buildingai/constants";
 import { InjectRepository } from "@buildingai/db/@nestjs/typeorm";
 import { AiProvider } from "@buildingai/db/entities";
 import { Like, Repository } from "@buildingai/db/typeorm";
+import { DictService } from "@buildingai/dict";
 import { HttpErrorFactory } from "@buildingai/errors";
 import { CreateAiProviderDto, UpdateAiProviderDto } from "@modules/ai/provider/dto/ai-provider.dto";
 import { Injectable } from "@nestjs/common";
@@ -16,6 +18,7 @@ export class AiProviderService extends BaseService<AiProvider> {
     constructor(
         @InjectRepository(AiProvider)
         private readonly aiProviderRepository: Repository<AiProvider>,
+        private readonly dictService: DictService,
     ) {
         super(aiProviderRepository);
     }
@@ -173,6 +176,16 @@ export class AiProviderService extends BaseService<AiProvider> {
         this.logger.log(`正在删除AI供应商: ${id}`);
 
         try {
+            const provider = await this.findOne({
+                where: { id },
+                relations: ["models"],
+            });
+            const defaultModelId = await this.dictService.get<string | undefined>(AI_DEFAULT_MODEL);
+
+            if (defaultModelId && provider?.models?.some((model) => model.id === defaultModelId)) {
+                await this.dictService.deleteByKey(AI_DEFAULT_MODEL);
+            }
+
             await this.delete(id);
             this.logger.log(`AI供应商删除成功: ${id}`);
         } catch (error) {

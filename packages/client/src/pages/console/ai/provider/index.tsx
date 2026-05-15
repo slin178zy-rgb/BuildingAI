@@ -258,10 +258,6 @@ const AiProviderIndexPage = () => {
   };
 
   const handleDelete = async (provider: AiProvider) => {
-    if (provider.isBuiltIn) {
-      toast.error("系统内置供应商不允许删除");
-      return;
-    }
     await confirm({
       title: "删除供应商",
       description: "确定要删除该供应商吗？此操作不可恢复。",

@@ -4,7 +4,6 @@ import {
 } from "@buildingai/ai-sdk";
 import { BaseController } from "@buildingai/base";
 import { AI_DEFAULT_MODEL } from "@buildingai/constants";
-import { BusinessCode } from "@buildingai/constants/shared/business-code.constant";
 import { AiModel } from "@buildingai/db/entities";
 import { DictService } from "@buildingai/dict";
 import { HttpErrorFactory } from "@buildingai/errors";
@@ -332,17 +331,9 @@ export class AiModelConsoleController extends BaseController {
         name: "删除AI模型",
     })
     async remove(@Param("id") id: string) {
-        // 检查是否为内置模型
         const model = await this.aiModelService.findOneById(id);
         if (!model) {
             throw HttpErrorFactory.business("AI模型不存在");
-        }
-
-        if (model.isBuiltIn) {
-            throw HttpErrorFactory.business(
-                "系统内置模型不允许删除",
-                BusinessCode.OPERATION_NOT_ALLOWED,
-            );
         }
 
         // 检查是否是默认模型
@@ -365,17 +356,7 @@ export class AiModelConsoleController extends BaseController {
         hidden: true,
     })
     async removeMany(@Body("ids") ids: string[]) {
-        // 批量检查是否包含内置模型
         const models = await Promise.all(ids.map((id) => this.aiModelService.findOneById(id)));
-
-        const builtInModels = models.filter((model) => model?.isBuiltIn);
-        if (builtInModels.length > 0) {
-            const builtInNames = builtInModels.map((m) => m.name).join("、");
-            throw HttpErrorFactory.business(
-                `以下系统内置模型不允许删除：${builtInNames}`,
-                BusinessCode.OPERATION_NOT_ALLOWED,
-            );
-        }
 
         // 过滤掉不存在的模型 ID
         const validIds = models

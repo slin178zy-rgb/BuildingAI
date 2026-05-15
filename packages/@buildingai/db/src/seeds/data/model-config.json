@@ -2491,6 +2491,48 @@
             "supported_model_types": ["llm"],
             "models": [
                 {
+                    "model": "deepseek-v4-flash",
+                    "label": "deepseek-v4-flash",
+                    "model_type": "llm",
+                    "features": [
+                        "agent-thought",
+                        "tool-call",
+                        "multi-tool-call",
+                        "stream-tool-call"
+                    ],
+                    "model_properties": {
+                        "context_size": 1000000,
+                        "mode": "chat"
+                    },
+                    "deprecated": false,
+                    "has_invalid_load_balancing_configs": false,
+                    "icon_url": "/static/ai/providers/deepseek.png",
+                    "thinking": false,
+                    "enableThinkingParam": false,
+                    "enabled": true
+                },
+                {
+                    "model": "deepseek-v4-pro",
+                    "label": "deepseek-v4-pro",
+                    "model_type": "llm",
+                    "features": [
+                        "agent-thought",
+                        "tool-call",
+                        "multi-tool-call",
+                        "stream-tool-call"
+                    ],
+                    "model_properties": {
+                        "context_size": 1000000,
+                        "mode": "chat"
+                    },
+                    "deprecated": false,
+                    "has_invalid_load_balancing_configs": false,
+                    "icon_url": "/static/ai/providers/deepseek.png",
+                    "thinking": false,
+                    "enableThinkingParam": false,
+                    "enabled": true
+                },
+                {
                     "model": "deepseek-chat",
                     "label": "deepseek-chat",
                     "model_type": "llm",
