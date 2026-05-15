@@ -69,6 +69,8 @@ export class Migration1778524800000 implements MigrationInterface {
         const featuresJson = JSON.stringify([...DEEPSEEK_V4_FEATURES]);
         const modelConfigJson = JSON.stringify(buildDeepSeekV4ModelConfig(contextSize));
 
+        // Explicit varchar casts: same `$n` in SELECT and in `NOT EXISTS` otherwise Postgres infers
+        // `text` vs `character varying` and fails with "inconsistent types deduced for parameter".
         await queryRunner.query(
             `
             INSERT INTO ai_models (
@@ -94,8 +96,8 @@ export class Migration1778524800000 implements MigrationInterface {
                 uuid_generate_v4(),
                 NOW(),
                 NOW(),
-                $1,
-                $2,
+                $1::character varying(100),
+                $2::character varying(100),
                 'llm',
                 p.id,
                 $3::jsonb,
@@ -114,7 +116,7 @@ export class Migration1778524800000 implements MigrationInterface {
                   SELECT 1
                   FROM ai_models m
                   WHERE m.provider_id = p.id
-                    AND m.model = $2
+                    AND m.model = $2::character varying(100)
               )
             `,
             [displayName, modelSlug, featuresJson, modelConfigJson],

@@ -1,10 +1,5 @@
 import type { SquarePublishStatus } from "@buildingai/services/web";
-import {
-  useApplyToDataset,
-  useDeleteDataset,
-  useLeaveDatasets,
-  useUnpublishDatasetFromSquare,
-} from "@buildingai/services/web";
+import { useApplyToDataset, useDeleteDataset, useLeaveDatasets } from "@buildingai/services/web";
 import { Button } from "@buildingai/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -42,7 +37,6 @@ export function DatasetActions() {
   const deleteMutation = useDeleteDataset(dataset?.id ?? "");
   const leaveMutation = useLeaveDatasets(dataset?.id ?? "");
   const applyMutation = useApplyToDataset(dataset?.id ?? "");
-  const unpublishMutation = useUnpublishDatasetFromSquare(dataset?.id ?? "");
 
   const title = dataset?.name ?? "";
   const squarePublishStatus = dataset?.squarePublishStatus ?? "none";
@@ -69,31 +63,6 @@ export function DatasetActions() {
       onSuccess: () => navigate("/datasets"),
     });
   }, [dataset?.id, isOwner, title, confirm, deleteMutation, navigate]);
-
-  const handleUnpublish = useCallback(async () => {
-    if (!dataset?.id || !isOwner) return;
-    const datasetId = dataset.id;
-    try {
-      await confirm({
-        title: "确认取消发布",
-        description: `确定要将知识库「${title}」从知识广场取消发布吗？取消后其他用户将无法在知识广场发现该知识库。`,
-        confirmText: "取消发布",
-        confirmVariant: "destructive",
-      });
-    } catch {
-      return;
-    }
-
-    unpublishMutation.mutate(undefined, {
-      onSuccess: () => {
-        toast.success("已从知识广场取消发布");
-        queryClient.refetchQueries({ queryKey: ["datasets", datasetId] });
-      },
-      onError: (error) => {
-        toast.error(error instanceof Error ? error.message : "取消发布失败");
-      },
-    });
-  }, [dataset?.id, isOwner, title, confirm, unpublishMutation, queryClient]);
 
   const handleLeave = useCallback(() => {
     if (!dataset?.id) return;
@@ -155,12 +124,8 @@ export function DatasetActions() {
           <DropdownMenuContent align="end">
             {(publishLabel !== "取消发布" || isOwner) && (
               <DropdownMenuItem
-                onClick={
-                  publishLabel === "取消发布"
-                    ? handleUnpublish
-                    : () => dialog.open({ type: "publish" })
-                }
-                disabled={isPending || unpublishMutation.isPending}
+                onClick={() => dialog.open({ type: "publish" })}
+                disabled={isPending}
                 className={
                   squarePublishStatus === "rejected"
                     ? "text-destructive focus:text-destructive"

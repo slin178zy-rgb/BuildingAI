@@ -12,6 +12,7 @@ import {
 } from "@buildingai/ui/components/ui/dialog";
 import { Label } from "@buildingai/ui/components/ui/label";
 import { Switch } from "@buildingai/ui/components/ui/switch";
+import { cn } from "@buildingai/utils";
 import { useEffect, useRef, useState } from "react";
 
 import { TagSelect } from "@/components/tags";
@@ -54,6 +55,8 @@ export function PublishDialog({
   const initialPublishedToSquareRef = useRef(defaultPublishedToSquare);
   const isPending = squarePublishStatus === "pending";
   const isRejected = squarePublishStatus === "rejected";
+  /** Whether the dialog was opened in "unpublish" mode (already published). */
+  const isUnpublishMode = initialPublishedToSquareRef.current === true;
   const canSubmit = true;
   const canResubmit = true;
 
@@ -116,7 +119,13 @@ export function PublishDialog({
               />
             </div>
             {publishToSquare && !isPending && (
-              <div className="flex justify-between space-y-2 pt-2">
+              <div
+                className={cn(
+                  "flex justify-between space-y-2 pt-2",
+                  isUnpublishMode && "pointer-events-none opacity-50",
+                )}
+                aria-disabled={isUnpublishMode || undefined}
+              >
                 <Label className="text-sm font-medium">
                   分类 <span className="text-muted-foreground text-xs">(可选)</span>
                 </Label>
@@ -131,7 +140,12 @@ export function PublishDialog({
               </div>
             )}
             {publishToSquare && (
-              <div className="flex items-start justify-between gap-4 pt-2">
+              <div
+                className={cn(
+                  "flex items-start justify-between gap-4 pt-2",
+                  isUnpublishMode && "opacity-50",
+                )}
+              >
                 <div className="min-w-0 flex-1 space-y-1">
                   <p className="text-sm font-medium">成员加入是否需要确认</p>
                   <p className="text-muted-foreground text-xs leading-relaxed">
@@ -142,6 +156,7 @@ export function PublishDialog({
                   checked={memberJoinApprovalRequired}
                   onCheckedChange={setMemberJoinApprovalRequired}
                   className="shrink-0"
+                  disabled={isUnpublishMode}
                 />
               </div>
             )}
