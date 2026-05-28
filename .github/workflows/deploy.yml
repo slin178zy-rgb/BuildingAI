@@ -1,0 +1,22 @@
+name: Deploy to chat.remiopen.com
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 43.161.238.169
+          username: root
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /root/buildingai
+            git pull origin master
+            docker compose restart nodejs
+            echo "✅ 部署完成 $(date)"
