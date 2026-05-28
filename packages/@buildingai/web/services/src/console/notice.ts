@@ -47,6 +47,23 @@ export type UpdateSmsSceneSettingDto = {
     content: string;
 };
 
+export type EmailConfig = {
+    host: string;
+    port: number;
+    secure: boolean;
+    authLogin: boolean;
+    username: string;
+    from: string;
+    password: string;
+    enable: boolean;
+};
+
+export type UpdateEmailConfigDto = Omit<EmailConfig, "enable">;
+
+export type UpdateEmailConfigStatusDto = {
+    enable: boolean;
+};
+
 type QueryOptionsUtil<T> = any;
 
 /**
@@ -125,6 +142,38 @@ export function useUpdateSmsConfigStatusMutation(provider: "aliyun" | "tencent",
                 `/notice/sms-config/${provider}/status`,
                 data,
             ),
+        ...options,
+    });
+}
+
+/**
+ * 获取邮件配置
+ */
+export function useEmailConfigQuery(options?: QueryOptionsUtil<EmailConfig>) {
+    return useQuery<EmailConfig>({
+        queryKey: ["notice", "email-config"],
+        queryFn: () => consoleHttpClient.get<EmailConfig>("/notice/email-config"),
+        ...options,
+    });
+}
+
+/**
+ * 更新邮件配置
+ */
+export function useUpdateEmailConfigMutation(options?: any) {
+    return useMutation<EmailConfig, Error, UpdateEmailConfigDto>({
+        mutationFn: (data) => consoleHttpClient.post<EmailConfig>("/notice/email-config", data),
+        ...options,
+    });
+}
+
+/**
+ * 更新邮件渠道启用状态
+ */
+export function useUpdateEmailConfigStatusMutation(options?: any) {
+    return useMutation<EmailConfig, Error, UpdateEmailConfigStatusDto>({
+        mutationFn: (data) =>
+            consoleHttpClient.patch<EmailConfig>("/notice/email-config/status", data),
         ...options,
     });
 }

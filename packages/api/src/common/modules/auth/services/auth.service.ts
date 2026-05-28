@@ -602,6 +602,21 @@ export class AuthService extends BaseService<User> {
         return this.loginByUser(user, terminal, ipAddress, userAgent);
     }
 
+    async loginByEmail(
+        email: string,
+        terminal: UserTerminalType = UserTerminal.PC,
+        ipAddress?: string,
+        userAgent?: string,
+    ) {
+        const user = await this.findOne({ where: { email } });
+
+        if (!user) {
+            return this.registerByEmail(email, terminal, ipAddress, userAgent);
+        }
+
+        return this.loginByUser(user, terminal, ipAddress, userAgent);
+    }
+
     private async registerByPhone(
         phone: string,
         phoneAreaCode: string,
@@ -629,6 +644,55 @@ export class AuthService extends BaseService<User> {
         );
 
         // Create token
+        const payload = checkUserLoginPlayground({
+            id: savedUser.id,
+            username: savedUser.username,
+            isRoot: BooleanNumber.NO,
+            terminal,
+        });
+
+        const tokenResult = await this.userTokenService.createToken(
+            savedUser.id,
+            payload,
+            terminal,
+            ipAddress,
+            userAgent,
+        );
+
+        return {
+            token: tokenResult.token,
+            expiresAt: tokenResult.expiresAt,
+            user: {
+                ...savedUser,
+                permission: [],
+                role: {},
+            },
+        };
+    }
+
+    private async registerByEmail(
+        email: string,
+        terminal: UserTerminalType = UserTerminal.PC,
+        ipAddress?: string,
+        userAgent?: string,
+    ) {
+        const { username, nickname, avatar } = this.generateRandomName();
+        const userNo = await generateNo(this.userRepository, "userNo");
+
+        const savedUser = await this.create(
+            {
+                email,
+                username,
+                nickname,
+                avatar,
+                userNo,
+                password: "",
+                status: BooleanNumber.YES,
+                source: UserCreateSource.EMAIL,
+            },
+            { excludeFields: ["password"] },
+        );
+
         const payload = checkUserLoginPlayground({
             id: savedUser.id,
             username: savedUser.username,

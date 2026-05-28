@@ -9,6 +9,7 @@ import {
     type TencentSmsConfig as TencentProviderConfig,
 } from "@buildingai/constants/shared/sms.constant";
 import { NoticeSetting } from "@buildingai/db/entities";
+import { EmailConfig, type SmtpConfig } from "@buildingai/db/entities/email-config.entity";
 import { SmsConfig } from "@buildingai/db/entities/sms-config.entity";
 import { Repository } from "@buildingai/db/typeorm";
 import { HttpErrorFactory } from "@buildingai/errors";
@@ -96,6 +97,8 @@ export class NoticeService extends BaseService<NoticeSetting> {
         private readonly noticeSettingRepository: Repository<NoticeSetting>,
         @InjectRepository(SmsConfig)
         private readonly smsConfigRepository: Repository<SmsConfig>,
+        @InjectRepository(EmailConfig)
+        private readonly emailConfigRepository: Repository<EmailConfig>,
     ) {
         super(noticeSettingRepository);
     }
@@ -506,5 +509,81 @@ export class NoticeService extends BaseService<NoticeSetting> {
         await this.smsConfigRepository.save(config);
 
         return this.getSmsConfig(provider);
+    }
+
+    // ==================== 邮件配置相关方法 ====================
+
+    /**
+     * 获取邮件 SMTP 配置
+     */
+    async getEmailConfig(): Promise<SmtpConfig & { enable: boolean }> {
+        const config = await this.emailConfigRepository.findOne({
+            order: { sort: "ASC", createdAt: "ASC" },
+        });
+
+        const defaultConfig: SmtpConfig = {
+            host: "",
+            port: 465,
+            secure: true,
+            authLogin: false,
+            username: "",
+            from: "",
+            password: "",
+        };
+
+        if (!config || !config.smtpConfig) {
+            return { ...defaultConfig, enable: false };
+        }
+
+        return {
+            ...config.smtpConfig,
+            enable: config.enable ?? false,
+        };
+    }
+
+    /**
+     * 更新邮件 SMTP 配置
+     */
+    async updateEmailConfig(payload: SmtpConfig): Promise<SmtpConfig & { enable: boolean }> {
+        let config = await this.emailConfigRepository.findOne({
+            order: { sort: "ASC", createdAt: "ASC" },
+        });
+
+        if (!config) {
+            config = this.emailConfigRepository.create({
+                enable: false,
+                sort: 0,
+                smtpConfig: payload,
+            });
+        } else {
+            config.smtpConfig = payload;
+        }
+
+        await this.emailConfigRepository.save(config);
+
+        return this.getEmailConfig();
+    }
+
+    /**
+     * 更新邮件渠道启用状态
+     */
+    async updateEmailEnable(enable: boolean): Promise<SmtpConfig & { enable: boolean }> {
+        let config = await this.emailConfigRepository.findOne({
+            order: { sort: "ASC", createdAt: "ASC" },
+        });
+
+        if (!config) {
+            config = this.emailConfigRepository.create({
+                enable,
+                sort: 0,
+                smtpConfig: null,
+            });
+        } else {
+            config.enable = enable;
+        }
+
+        await this.emailConfigRepository.save(config);
+
+        return this.getEmailConfig();
     }
 }

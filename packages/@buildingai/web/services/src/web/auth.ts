@@ -1,4 +1,4 @@
-import { type SmsSceneType, type UserTerminalType } from "@buildingai/constants/shared";
+import { type EmailSceneType, type SmsSceneType, type UserTerminalType } from "@buildingai/constants/shared";
 import type { MutationOptionsUtil, UserInfo } from "@buildingai/web-types";
 import { useMutation } from "@tanstack/react-query";
 
@@ -67,6 +67,33 @@ export type SendSmsCodeResponse = string;
  */
 export type SmsLoginResponse = LoginResponse;
 
+/**
+ * 发送邮件验证码请求参数
+ */
+export type SendEmailCodeRequest = {
+    email: string;
+    scene?: EmailSceneType;
+};
+
+/**
+ * 邮箱验证码登录请求参数
+ */
+export type EmailLoginRequest = {
+    email: string;
+    code: string;
+    terminal: UserTerminalType;
+};
+
+/**
+ * 发送邮件验证码响应
+ */
+export type SendEmailCodeResponse = string;
+
+/**
+ * 邮箱验证码登录响应
+ */
+export type EmailLoginResponse = LoginResponse;
+
 export function useLoginMutation(options?: MutationOptionsUtil<LoginResponse, LoginRequest>) {
     return useMutation<LoginResponse, Error, LoginRequest>({
         mutationFn: (vars) => apiHttpClient.post<LoginResponse>("/auth/login", vars),
@@ -94,6 +121,30 @@ export function useSmsLoginMutation(
 ) {
     return useMutation<SmsLoginResponse, Error, SmsLoginRequest>({
         mutationFn: (vars) => apiHttpClient.post<SmsLoginResponse>("/auth/sms/login", vars),
+        ...options,
+    });
+}
+
+/**
+ * 发送邮件验证码
+ */
+export function useSendEmailCodeMutation(
+    options?: MutationOptionsUtil<SendEmailCodeResponse, SendEmailCodeRequest>,
+) {
+    return useMutation<SendEmailCodeResponse, Error, SendEmailCodeRequest>({
+        mutationFn: (vars) => apiHttpClient.post<SendEmailCodeResponse>("/auth/email/send-code", vars),
+        ...options,
+    });
+}
+
+/**
+ * 邮箱验证码登录
+ */
+export function useEmailLoginMutation(
+    options?: MutationOptionsUtil<EmailLoginResponse, EmailLoginRequest>,
+) {
+    return useMutation<EmailLoginResponse, Error, EmailLoginRequest>({
+        mutationFn: (vars) => apiHttpClient.post<EmailLoginResponse>("/auth/email/login", vars),
         ...options,
     });
 }

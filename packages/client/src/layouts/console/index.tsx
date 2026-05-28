@@ -34,6 +34,7 @@ import DecorateLayoutIndexPage from "@/pages/console/decorate/layout";
 import ExtensionIndexPage from "@/pages/console/extension";
 import FinancialAnalysisIndexPage from "@/pages/console/financial/analysis";
 import FinancialBalanceDetailsIndexPage from "@/pages/console/financial/balance-details";
+import NoticeEmailPage from "@/pages/console/notice/email";
 import NoticeNotificationSettingsPage from "@/pages/console/notice/notification-settings";
 import NoticeSmsPage from "@/pages/console/notice/sms";
 import OperationIndexPage from "@/pages/console/operation";
@@ -194,6 +195,10 @@ function ConsoleRoutes() {
           {
             path: "sms",
             element: <NoticeSmsPage />,
+          },
+          {
+            path: "email",
+            element: <NoticeEmailPage />,
           },
           {
             path: "notification-settings",

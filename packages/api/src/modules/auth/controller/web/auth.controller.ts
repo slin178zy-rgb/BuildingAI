@@ -2,6 +2,7 @@ import { BaseController } from "@buildingai/base";
 import { CacheService } from "@buildingai/cache";
 import { LOGIN_TYPE, LoginType } from "@buildingai/constants";
 import { BusinessCode } from "@buildingai/constants/shared/business-code.constant";
+import { EmailScene } from "@buildingai/constants/shared/email.constant";
 import { SmsScene } from "@buildingai/constants/shared/sms.constant";
 import { UserTerminal } from "@buildingai/constants/shared/status-codes.constant";
 import { type UserPlayground } from "@buildingai/db";
@@ -13,10 +14,12 @@ import { HttpErrorFactory } from "@buildingai/errors";
 import { isDevelopment } from "@buildingai/utils";
 import { WebController } from "@common/decorators";
 import { ChangePasswordDto } from "@common/modules/auth/dto/change-password.dto";
+import { EmailLoginDto, SendEmailCodeDto } from "@common/modules/auth/dto/email.dto";
 import { LoginDto } from "@common/modules/auth/dto/login.dto";
 import { RegisterDto } from "@common/modules/auth/dto/register.dto";
 import { SendSmsCodeDto, SmsLoginDto } from "@common/modules/auth/dto/sms.dto";
 import { AuthService } from "@common/modules/auth/services/auth.service";
+import { EmailService } from "@common/modules/email/services/email.service";
 import { SmsService } from "@common/modules/sms/services/sms.service";
 import { WechatOaService } from "@common/modules/wechat/services/wechatoa.service";
 import { type LoginSettingsConfig } from "@modules/user/dto/login-settings.dto";
@@ -36,6 +39,7 @@ export class AuthWebController extends BaseController {
         private authService: AuthService,
         private wechatOaService: WechatOaService,
         private smsService: SmsService,
+        private emailService: EmailService,
         private dictService: DictService,
         private cacheService: CacheService,
     ) {
@@ -325,6 +329,34 @@ export class AuthWebController extends BaseController {
         }
         await this.smsService.verifyCode(mobile, areaCode, code, SmsScene.LOGIN);
         return this.authService.loginBySms(mobile, areaCode, terminal, ipAddress, userAgent);
+    }
+
+    @Public()
+    @Post("email/send-code")
+    async sendEmailCode(@Body() sendEmailCodeDto: SendEmailCodeDto) {
+        await this.assertLoginMethodEnabled(LOGIN_TYPE.EMAIL);
+        await this.emailService.sendCode(sendEmailCodeDto.email, EmailScene.LOGIN);
+        return "验证码已发送至您的邮箱，5分钟内有效";
+    }
+
+    @Public()
+    @Post("email/login")
+    @BuildFileUrl(["**.avatar"])
+    async emailLogin(
+        @Body() emailLoginDto: EmailLoginDto,
+        @Headers("user-agent") userAgent?: string,
+        @Headers("x-real-ip") ipAddress?: string,
+    ) {
+        await this.assertLoginMethodEnabled(LOGIN_TYPE.EMAIL);
+        const { email, code, terminal } = emailLoginDto;
+        const existingUser = await this.authService.findOne({
+            where: { email },
+        });
+        if (!existingUser) {
+            await this.assertRegisterMethodEnabled(LOGIN_TYPE.EMAIL);
+        }
+        await this.emailService.verifyCode(email, code, EmailScene.LOGIN);
+        return this.authService.loginByEmail(email, terminal, ipAddress, userAgent);
     }
 
     @Public()

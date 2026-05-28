@@ -4,8 +4,10 @@ import {
   getWechatQrcode,
   getWechatQrcodeStatus,
   useCheckAccountMutation,
+  useEmailLoginMutation,
   useLoginMutation,
   useRegisterMutation,
+  useSendEmailCodeMutation,
   useSendSmsCodeMutation,
   useSmsLoginMutation,
 } from "@buildingai/services/web";
@@ -97,6 +99,7 @@ type VerifyCodeFormValues = z.infer<typeof verifyCodeSchema>;
 type RegisterFormValues = z.infer<typeof registerFormSchema>;
 
 const MOBILE_REGEX = /^1[3-9]\d{9}$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const FormTitle: Record<string, { title: string; description: string }> = {
   [PageEnum.ACCOUNT_INPUT]: {
@@ -170,20 +173,34 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
   const allowAccountLogin =
     loginSettings?.allowedLoginMethods?.includes(LOGIN_TYPE.ACCOUNT) ?? true;
   const allowPhoneLogin = loginSettings?.allowedLoginMethods?.includes(LOGIN_TYPE.PHONE) ?? false;
+  const allowEmailLogin = loginSettings?.allowedLoginMethods?.includes(LOGIN_TYPE.EMAIL) ?? false;
   const allowWechatLogin = loginSettings?.allowedLoginMethods?.includes(LOGIN_TYPE.WECHAT) ?? true;
   const allowAccountRegister =
     loginSettings?.allowedRegisterMethods?.includes(LOGIN_TYPE.ACCOUNT) ?? true;
   const allowPhoneRegister =
     loginSettings?.allowedRegisterMethods?.includes(LOGIN_TYPE.PHONE) ?? false;
-  const canUseAccountInput = allowAccountLogin || allowPhoneLogin;
+  const allowEmailRegister =
+    loginSettings?.allowedRegisterMethods?.includes(LOGIN_TYPE.EMAIL) ?? false;
+  const canUseAccountInput = allowAccountLogin || allowPhoneLogin || allowEmailLogin;
   const showPolicyAgreement = loginSettings?.showPolicyAgreement ?? true;
   const loginError = searchParams.get("error");
-  const accountLoginLabel = allowAccountLogin && allowPhoneLogin ? "账号 / 手机号" : "账号";
+  const accountLoginLabel =
+    allowAccountLogin && (allowPhoneLogin || allowEmailLogin)
+      ? "账号 / 手机号 / 邮箱"
+      : allowAccountLogin
+        ? "账号"
+        : allowPhoneLogin
+          ? "手机号"
+          : "邮箱";
   const accountLoginPlaceholder = allowAccountLogin
-    ? allowPhoneLogin
-      ? "请输入账号或手机号"
+    ? allowPhoneLogin || allowEmailLogin
+      ? "请输入账号、手机号或邮箱"
       : "请输入账号"
-    : "请输入手机号";
+    : allowPhoneLogin
+      ? allowEmailLogin
+        ? "请输入手机号或邮箱"
+        : "请输入手机号"
+      : "请输入邮箱";
 
   const accountForm = useForm<AccountFormValues>({
     resolver: zodResolver(accountSchema),
@@ -216,6 +233,8 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
   const { mutateAsync: register, isPending: isRegisterPending } = useRegisterMutation();
   const { mutateAsync: sendSmsCode, isPending: isSendSmsCodePending } = useSendSmsCodeMutation();
   const { mutateAsync: smsLogin, isPending: isSmsLoginPending } = useSmsLoginMutation();
+  const { mutateAsync: sendEmailCode, isPending: isSendEmailCodePending } = useSendEmailCodeMutation();
+  const { mutateAsync: emailLogin, isPending: isEmailLoginPending } = useEmailLoginMutation();
 
   useEffect(() => {
     if (smsCountdown <= 0) {
@@ -312,6 +331,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 
   const onAccountNext = async (values: AccountFormValues) => {
     const isMobileAccount = MOBILE_REGEX.test(values.account);
+    const isEmailAccount = EMAIL_REGEX.test(values.account);
     const res = await checkAccount({ account: values.account });
     if (!res.hasAccount) {
       if (isMobileAccount && allowPhoneLogin) {
@@ -329,6 +349,21 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
         setPage(PageEnum.VERIFICATION_CODE);
         return;
       }
+      if (isEmailAccount && allowEmailLogin) {
+        if (!allowEmailRegister) {
+          accountForm.setError("account", {
+            message: "账号不存在，请先注册",
+          });
+          return;
+        }
+        setCheckResult({
+          type: "email",
+          hasPassword: false,
+          account: values.account,
+        });
+        setPage(PageEnum.VERIFICATION_CODE);
+        return;
+      }
 
       accountForm.setError("account", {
         message: allowAccountRegister ? "账号不存在，请先注册" : "账号不存在",
@@ -336,9 +371,16 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
       return;
     }
 
-    if (res.type === "username" || res.type === "email") {
+    if (res.type === "username") {
       if (!allowAccountLogin) {
         accountForm.setError("account", { message: "账号密码登录未开启" });
+        return;
+      }
+    }
+
+    if (res.type === "email") {
+      if (!allowAccountLogin && !allowEmailLogin) {
+        accountForm.setError("account", { message: "邮箱登录未开启" });
         return;
       }
     }
@@ -358,7 +400,15 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
       return;
     }
     if (res.type === "email") {
-      setPage(PageEnum.PASSWORD);
+      if (res.hasPassword && allowAccountLogin) {
+        setPage(PageEnum.PASSWORD);
+        return;
+      }
+      if (allowEmailLogin) {
+        setPage(PageEnum.VERIFICATION_CODE);
+        return;
+      }
+      accountForm.setError("account", { message: "邮箱验证码登录未开启" });
       return;
     }
     if (res.type === "mobile") {
@@ -408,9 +458,28 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
     setSmsCountdown(60);
   };
 
+  /**
+   * 发送邮件验证码
+   */
+  const onSendEmailCode = async () => {
+    if (!checkResult || checkResult.type !== "email") {
+      verifyCodeForm.setError("code", { message: "仅支持邮箱验证码登录" });
+      return;
+    }
+
+    if (smsCountdown > 0) {
+      return;
+    }
+
+    await sendEmailCode({
+      email: checkResult.account,
+    });
+    setSmsCountdown(60);
+  };
+
   const onVerifyCodeSubmit = async (values: VerifyCodeFormValues) => {
-    if (!checkResult || checkResult.type !== "mobile") {
-      verifyCodeForm.setError("code", { message: "手机号信息缺失，请重新输入" });
+    if (!checkResult) {
+      verifyCodeForm.setError("code", { message: "账号信息缺失，请重新输入" });
       return;
     }
 
@@ -419,15 +488,30 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
       return;
     }
 
-    const data = await smsLogin({
-      mobile: checkResult.account,
-      code: values.code,
-      terminal: 1,
-      areaCode: "86",
-    });
+    if (checkResult.type === "mobile") {
+      const data = await smsLogin({
+        mobile: checkResult.account,
+        code: values.code,
+        terminal: 1,
+        areaCode: "86",
+      });
+      setToken(data.token);
+      handleRedirect(redirect || "/", data.token);
+      return;
+    }
 
-    setToken(data.token);
-    handleRedirect(redirect || "/", data.token);
+    if (checkResult.type === "email") {
+      const data = await emailLogin({
+        email: checkResult.account,
+        code: values.code,
+        terminal: 1,
+      });
+      setToken(data.token);
+      handleRedirect(redirect || "/", data.token);
+      return;
+    }
+
+    verifyCodeForm.setError("code", { message: "不支持的验证码登录类型" });
   };
 
   const handleBackToAccountInput = () => {
@@ -664,7 +748,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
     <Form {...passwordForm}>
       <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}>
         <FieldGroup className="gap-5">
-          {checkResult?.type === "mobile" && allowPhoneLogin && (
+          {(checkResult?.type === "mobile" && allowPhoneLogin) || (checkResult?.type === "email" && allowEmailLogin) ? (
             <Field>
               <Button
                 variant="secondary"
@@ -675,12 +759,12 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
                 验证码登录
               </Button>
             </Field>
-          )}
-          {checkResult?.type === "mobile" && allowPhoneLogin && (
+          ) : null}
+          {(checkResult?.type === "mobile" && allowPhoneLogin) || (checkResult?.type === "email" && allowEmailLogin) ? (
             <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
               或使用密码登录
             </FieldSeparator>
-          )}
+          ) : null}
           <FormField
             control={passwordForm.control}
             name="password"
@@ -767,9 +851,9 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
                     <Button
                       type="button"
                       variant="secondary"
-                      onClick={onSendSmsCode}
-                      loading={isSendSmsCodePending}
-                      disabled={smsCountdown > 0 || isSendSmsCodePending}
+                      onClick={checkResult?.type === "email" ? onSendEmailCode : onSendSmsCode}
+                      loading={isSendSmsCodePending || isSendEmailCodePending}
+                      disabled={smsCountdown > 0 || isSendSmsCodePending || isSendEmailCodePending}
                     >
                       {smsCountdown > 0 ? `${smsCountdown}s` : "获取验证码"}
                     </Button>
@@ -789,15 +873,15 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
                   <Checkbox
                     checked={agree}
                     onCheckedChange={(e) => setAgree(e as boolean)}
-                    id="terms-sms-login"
+                    id="terms-verify-login"
                   />
-                  {renderAgreementTrigger("terms-sms-login")}
+                  {renderAgreementTrigger("terms-verify-login")}
                 </span>
               </FieldDescription>
             </Field>
           )}
           <Field>
-            <Button type="submit" className="w-full" loading={isSmsLoginPending}>
+            <Button type="submit" className="w-full" loading={isSmsLoginPending || isEmailLoginPending}>
               登录 <ArrowRight />
             </Button>
             <FieldDescription className="text-center">

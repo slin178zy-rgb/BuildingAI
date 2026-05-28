@@ -23,6 +23,7 @@ const LOGIN_TYPE_OPTIONS: { value: LoginType; label: string }[] = [
   { value: LOGIN_TYPE.ACCOUNT as LoginType, label: "账号" },
   { value: LOGIN_TYPE.WECHAT as LoginType, label: "微信" },
   { value: LOGIN_TYPE.PHONE as LoginType, label: "手机号" },
+  { value: LOGIN_TYPE.EMAIL as LoginType, label: "邮箱" },
 ];
 
 const defaultConfig = {

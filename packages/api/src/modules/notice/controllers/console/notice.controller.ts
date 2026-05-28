@@ -11,6 +11,11 @@ import { Permissions } from "@common/decorators/permissions.decorator";
 import { Body, Get, Param, Patch, Post } from "@nestjs/common";
 
 import {
+    SendTestEmailDto,
+    UpdateEmailConfigDto,
+    UpdateEmailConfigStatusDto,
+} from "../../dto/email-config.dto";
+import {
     UpdateAliyunSmsConfigDto,
     UpdateSmsConfigStatusDto,
     UpdateSmsSceneTemplateDto,
@@ -127,5 +132,54 @@ export class NoticeConsoleController extends BaseController {
             templateId: body.templateId,
             content: body.content,
         });
+    }
+
+    // ==================== 邮件配置相关接口 ====================
+
+    /**
+     * 获取邮件 SMTP 配置
+     */
+    @Get("email-config")
+    @Permissions({
+        code: "email-config-detail",
+        name: "获取邮件配置",
+        description: "获取邮件 SMTP 配置",
+    })
+    async getEmailConfig() {
+        return this.noticeService.getEmailConfig();
+    }
+
+    /**
+     * 更新邮件 SMTP 配置
+     */
+    @Post("email-config")
+    @Permissions({
+        code: "email-config-update",
+        name: "更新邮件配置",
+        description: "更新邮件 SMTP 配置",
+    })
+    async updateEmailConfig(@Body() body: UpdateEmailConfigDto) {
+        return this.noticeService.updateEmailConfig({
+            host: body.host,
+            port: body.port,
+            secure: body.secure ?? true,
+            authLogin: body.authLogin ?? false,
+            username: body.username,
+            from: body.from,
+            password: body.password,
+        });
+    }
+
+    /**
+     * 更新邮件渠道启用状态
+     */
+    @Patch("email-config/status")
+    @Permissions({
+        code: "email-config-update-status",
+        name: "更新邮件渠道状态",
+        description: "启用/禁用邮件渠道",
+    })
+    async updateEmailConfigStatus(@Body() body: UpdateEmailConfigStatusDto) {
+        return this.noticeService.updateEmailEnable(Boolean(body.enable));
     }
 }

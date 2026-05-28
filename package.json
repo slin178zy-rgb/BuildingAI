@@ -219,8 +219,5 @@
             "unrs-resolver",
             "vue-demi"
         ]
-    },
-    "engines": {
-        "node": ">=22.20.x <23"
     }
 }

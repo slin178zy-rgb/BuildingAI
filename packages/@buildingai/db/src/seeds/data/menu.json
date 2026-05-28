@@ -350,6 +350,18 @@
                         "sourceType": 1
                     },
                     {
+                        "name": "邮件配置",
+                        "code": "email-config",
+                        "path": "email",
+                        "icon": "",
+                        "component": "/console/notice/email/index",
+                        "permissionCode": "email-config-detail",
+                        "sort": 5,
+                        "isHidden": 0,
+                        "type": 2,
+                        "sourceType": 1
+                    },
+                    {
                         "name": "通知设置",
                         "code": "notification-settings",
                         "path": "notification-settings",
