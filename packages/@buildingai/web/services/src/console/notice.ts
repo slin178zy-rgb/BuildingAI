@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { consoleHttpClient } from "../base";
 
@@ -158,22 +158,30 @@ export function useEmailConfigQuery(options?: QueryOptionsUtil<EmailConfig>) {
 }
 
 /**
- * 更新邮件配置
+ * 更新邮件配置（保存后自动刷新缓存）
  */
 export function useUpdateEmailConfigMutation(options?: any) {
+    const queryClient = useQueryClient();
     return useMutation<EmailConfig, Error, UpdateEmailConfigDto>({
         mutationFn: (data) => consoleHttpClient.post<EmailConfig>("/notice/email-config", data),
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ["notice", "email-config"] });
+        },
         ...options,
     });
 }
 
 /**
- * 更新邮件渠道启用状态
+ * 更新邮件渠道启用状态（切换后自动刷新缓存）
  */
 export function useUpdateEmailConfigStatusMutation(options?: any) {
+    const queryClient = useQueryClient();
     return useMutation<EmailConfig, Error, UpdateEmailConfigStatusDto>({
         mutationFn: (data) =>
             consoleHttpClient.patch<EmailConfig>("/notice/email-config/status", data),
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ["notice", "email-config"] });
+        },
         ...options,
     });
 }

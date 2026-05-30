@@ -12,7 +12,7 @@ import { Label } from "@buildingai/ui/components/ui/label";
 import { Switch } from "@buildingai/ui/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -43,6 +43,11 @@ const defaultConfig: EmailConfigFormValues = {
 
 const EmailConfigPage = () => {
   const { data, isLoading } = useEmailConfigQuery();
+  // 本地乐观状态：null 表示尚未初始化，初始化后跟随服务端；点击后立刻更新
+  const [localEnable, setLocalEnable] = useState<boolean | null>(null);
+  // 标记是否处于乐观更新中，防止 useEffect 覆盖乐观值
+  const isOptimisticRef = useRef(false);
+
   const updateMutation = useUpdateEmailConfigMutation({
     onSuccess: () => {
       toast.success("保存成功");
@@ -51,11 +56,18 @@ const EmailConfigPage = () => {
       toast.error(`保存失败: ${e.message}`);
     },
   });
+
   const statusMutation = useUpdateEmailConfigStatusMutation({
-    onSuccess: (data) => {
-      toast.success(data.enable ? "已启用邮件服务" : "已禁用邮件服务");
+    onSuccess: (responseData) => {
+      // 接口成功：用服务端返回值作为最终状态，清除乐观标记
+      isOptimisticRef.current = false;
+      setLocalEnable(responseData.enable);
+      toast.success(responseData.enable ? "已启用邮件服务" : "已禁用邮件服务");
     },
     onError: (e) => {
+      // 接口失败：回滚到服务端数据，清除乐观标记
+      isOptimisticRef.current = false;
+      setLocalEnable(data?.enable ?? false);
       toast.error(`操作失败: ${e.message}`);
     },
   });
@@ -76,6 +88,10 @@ const EmailConfigPage = () => {
         from: data.from || "",
         password: data.password || "",
       });
+      // 只在非乐观更新期间同步本地状态，避免覆盖乐观值导致抖动
+      if (!isOptimisticRef.current) {
+        setLocalEnable(data.enable ?? false);
+      }
     }
   }, [data, form]);
 
@@ -84,6 +100,8 @@ const EmailConfigPage = () => {
   };
 
   const handleToggleEnable = (enable: boolean) => {
+    isOptimisticRef.current = true; // 标记进入乐观更新，阻止 useEffect 覆盖
+    setLocalEnable(enable);         // 立刻更新视觉状态
     statusMutation.mutate({ enable });
   };
 
@@ -108,9 +126,8 @@ const EmailConfigPage = () => {
                 <Label htmlFor="email-enable">启用邮件服务</Label>
                 <Switch
                   id="email-enable"
-                  checked={data?.enable ?? false}
+                  checked={localEnable ?? data?.enable ?? false}
                   onCheckedChange={handleToggleEnable}
-                  disabled={statusMutation.isPending}
                 />
               </div>
             </PermissionGuard>

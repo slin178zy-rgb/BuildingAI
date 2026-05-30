@@ -518,6 +518,7 @@ export class NoticeService extends BaseService<NoticeSetting> {
      */
     async getEmailConfig(): Promise<SmtpConfig & { enable: boolean }> {
         const config = await this.emailConfigRepository.findOne({
+            where: {},
             order: { sort: "ASC", createdAt: "ASC" },
         });
 
@@ -546,6 +547,7 @@ export class NoticeService extends BaseService<NoticeSetting> {
      */
     async updateEmailConfig(payload: SmtpConfig): Promise<SmtpConfig & { enable: boolean }> {
         let config = await this.emailConfigRepository.findOne({
+            where: {},
             order: { sort: "ASC", createdAt: "ASC" },
         });
 
@@ -569,6 +571,7 @@ export class NoticeService extends BaseService<NoticeSetting> {
      */
     async updateEmailEnable(enable: boolean): Promise<SmtpConfig & { enable: boolean }> {
         let config = await this.emailConfigRepository.findOne({
+            where: {},
             order: { sort: "ASC", createdAt: "ASC" },
         });
 

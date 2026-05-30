@@ -138,24 +138,19 @@ export class UserTokenService extends BaseService<UserToken> {
         try {
             const cacheKey = `${this.TOKEN_CACHE_PREFIX}${token}`;
 
-            // Always fetch tokenRecord for sliding refresh support
-            const tokenRecord = await this.findOne({
-                where: { token },
-            });
-
+            // Check memory cache first (no DB query needed on cache hit)
             const cachedResult = await this.cacheService.get<{
                 isValid: boolean;
                 payload?: any;
                 error?: string;
+                tokenRecord?: UserToken;
             }>(cacheKey);
             if (cachedResult) {
-                // Return cached result with tokenRecord for refresh logic
-                return {
-                    ...cachedResult,
-                    tokenRecord: cachedResult.isValid ? tokenRecord : undefined,
-                };
+                const { tokenRecord: cachedTokenRecord, ...rest } = cachedResult;
+                return { ...rest, tokenRecord: cachedResult.isValid ? cachedTokenRecord : undefined };
             }
 
+            // Check Redis cache
             const redisResult = await this.redisService.get<string>(cacheKey);
             if (redisResult) {
                 const parsedResult = JSON.parse(redisResult);
@@ -163,12 +158,14 @@ export class UserTokenService extends BaseService<UserToken> {
                 // 同时更新内存缓存
                 await this.cacheService.set(cacheKey, parsedResult, this.TOKEN_CACHE_TTL);
 
-                // Return cached result with tokenRecord for refresh logic
-                return {
-                    ...parsedResult,
-                    tokenRecord: parsedResult.isValid ? tokenRecord : undefined,
-                };
+                const { tokenRecord: cachedTokenRecord, ...rest } = parsedResult;
+                return { ...rest, tokenRecord: parsedResult.isValid ? cachedTokenRecord : undefined };
             }
+
+            // Cache miss: fetch tokenRecord from DB
+            const tokenRecord = await this.findOne({
+                where: { token },
+            });
 
             // 如果令牌不存在
             if (!tokenRecord) {
@@ -201,8 +198,8 @@ export class UserTokenService extends BaseService<UserToken> {
                 this.logger.warn(`更新令牌最后活跃时间失败: ${err.message}`);
             });
 
-            // 缓存有效结果
-            const result = { isValid: true, payload };
+            // 缓存有效结果（含 tokenRecord，避免后续请求再查 DB）
+            const result = { isValid: true, payload, tokenRecord };
             await this.cacheTokenResult(cacheKey, result);
 
             return { ...result, tokenRecord };
