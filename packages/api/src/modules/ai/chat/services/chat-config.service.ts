@@ -28,13 +28,7 @@ export class ChatConfigService extends BaseService<Dict> {
         // 获取建议选项配置
         const suggestions = await this.dictService.get(
             "chat_suggestions",
-            [
-                { icon: "🎮", text: "写一个像宝可梦方式的小游戏" },
-                { icon: "📅", text: "2025年节日安排出来了吗?" },
-                { icon: "😊", text: "AI时代，什么能力不可被替代?" },
-                { icon: "📝", text: "一篇生成爆款小红书笔记" },
-                { icon: "🔍", text: "AI能成为全球人类产生威胁吗?" },
-            ],
+            [],
             "chat_config",
         );
 
