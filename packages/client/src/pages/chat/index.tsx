@@ -11,11 +11,7 @@ import { useParams } from "react-router-dom";
 import type { Suggestion } from "@/components/ask-assistant-ui";
 import { AssistantProvider, Chat, useAssistant } from "@/components/ask-assistant-ui";
 
-const DEFAULT_SUGGESTIONS: Suggestion[] = [
-  { id: "1", text: "如何开始使用 React Hooks？" },
-  { id: "2", text: "TypeScript 的最佳实践是什么？" },
-  { id: "3", text: "如何优化 React 应用的性能？" },
-];
+
 
 export const meta = definePageMeta({
   title: "对话",
@@ -35,7 +31,7 @@ const IndexPage = () => {
   });
 
   const suggestions: Suggestion[] = useMemo(() => {
-    if (!chatConfig) return DEFAULT_SUGGESTIONS;
+    if (!chatConfig) return [];
     if (!chatConfig.suggestionsEnabled) return [];
     const list = Array.isArray(chatConfig.suggestions) ? chatConfig.suggestions : [];
     return list
