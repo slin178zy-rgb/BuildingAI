@@ -1,4 +1,4 @@
-name: Deploy to chat.remiopen.com
+name: Deploy to remiopen.com
 
 on:
   push:
@@ -14,7 +14,7 @@ jobs:
         with:
           host: 43.161.238.169
           username: root
-          port: 37095
+          port: 22
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd /root/buildingai
