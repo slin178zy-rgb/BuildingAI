@@ -1,7 +1,11 @@
-export { EditorDndScope } from "./dnd-scope";
+import { lazy } from "react";
+
 export { BaseEditorKit } from "./editor-base-kit";
 export { EditorKit, type MyEditor, useEditor } from "./editor-kit";
 export { markdownToValue, serializeEditorToMarkdown } from "./markdown-utils";
 export { Editor, EditorContainer } from "./ui/editor";
 export { EditorContentRenderer } from "./ui/editor-content-renderer";
 export { Plate, usePlateEditor } from "platejs/react";
+
+// 懒加载 EditorDndScope，减少首屏加载体积
+export const EditorDndScope = lazy(() => import("./dnd-scope").then((m) => ({ default: m.EditorDndScope })));

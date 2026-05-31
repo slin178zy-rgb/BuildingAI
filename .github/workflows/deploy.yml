@@ -20,7 +20,7 @@ jobs:
             cd /root/buildingai
             git pull origin master
             echo "🔨 构建前端..."
-            docker exec buildingai-nodejs bash -c "cd /buildingai && pnpm --filter @buildingai/client build 2>&1 | tail -5"
+            docker exec buildingai-nodejs bash -c "cd /buildingai && pnpm --filter buildingai-client build:web 2>&1 | tail -5"
             echo "📦 更新静态文件..."
             docker exec buildingai-nodejs bash -c "cp -r /buildingai/packages/client/dist/* /buildingai/public/web/"
             echo "🔄 重启服务..."

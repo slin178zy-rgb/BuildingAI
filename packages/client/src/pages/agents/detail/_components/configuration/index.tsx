@@ -18,7 +18,7 @@ import { Button } from "@buildingai/ui/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@buildingai/ui/components/ui/tabs";
 import { TooltipProvider } from "@buildingai/ui/components/ui/tooltip";
 import { ArrowBigUp, Loader2, RefreshCcw } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -566,49 +566,51 @@ export default function Configuration() {
                 value="interface"
                 className="chat-scroll mt-0 flex h-full min-h-0 flex-col"
               >
-                <EditorDndScope>
-                  <div className="space-y-4">
-                    {!isThirdPartyMode && (
-                      <>
-                        <WelcomeMessage
-                          value={config.openingStatement}
-                          onChange={(v) => updateConfig("openingStatement", v)}
-                        />
-                        <StarterQuestions
-                          value={config.openingQuestions}
-                          onChange={(v) => updateConfig("openingQuestions", v)}
-                        />
-                        <AutoFollowUp
-                          value={config.autoQuestions}
-                          onChange={(v) => updateConfig("autoQuestions", v)}
-                          titleModelId={config.modelRouting?.titleModel?.modelId}
-                          onTitleModelChange={(id) => {
-                            const next: ModelRouting = { ...(config.modelRouting ?? {}) };
-                            if (id) {
-                              next.titleModel = { modelId: id };
-                            } else {
-                              delete next.titleModel;
-                            }
-                            updateConfig("modelRouting", next);
-                          }}
-                        />
-                      </>
-                    )}
-                    <QuickCommands
-                      value={config.quickCommands}
-                      onChange={(v) => updateConfig("quickCommands", v)}
-                    />
-                    <ChatAvatar
-                      value={config.chatAvatar}
-                      enabled={config.chatAvatarEnabled}
-                      onChange={(v) => updateConfig("chatAvatar", v)}
-                      onEnabledChange={(enabled) => {
-                        updateConfig("chatAvatarEnabled", enabled);
-                        if (!enabled) updateConfig("chatAvatar", "");
-                      }}
-                    />
-                  </div>
-                </EditorDndScope>
+                <Suspense fallback={<div className="flex h-32 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}>
+                  <EditorDndScope>
+                    <div className="space-y-4">
+                      {!isThirdPartyMode && (
+                        <>
+                          <WelcomeMessage
+                            value={config.openingStatement}
+                            onChange={(v) => updateConfig("openingStatement", v)}
+                          />
+                          <StarterQuestions
+                            value={config.openingQuestions}
+                            onChange={(v) => updateConfig("openingQuestions", v)}
+                          />
+                          <AutoFollowUp
+                            value={config.autoQuestions}
+                            onChange={(v) => updateConfig("autoQuestions", v)}
+                            titleModelId={config.modelRouting?.titleModel?.modelId}
+                            onTitleModelChange={(id) => {
+                              const next: ModelRouting = { ...(config.modelRouting ?? {}) };
+                              if (id) {
+                                next.titleModel = { modelId: id };
+                              } else {
+                                delete next.titleModel;
+                              }
+                              updateConfig("modelRouting", next);
+                            }}
+                          />
+                        </>
+                      )}
+                      <QuickCommands
+                        value={config.quickCommands}
+                        onChange={(v) => updateConfig("quickCommands", v)}
+                      />
+                      <ChatAvatar
+                        value={config.chatAvatar}
+                        enabled={config.chatAvatarEnabled}
+                        onChange={(v) => updateConfig("chatAvatar", v)}
+                        onEnabledChange={(enabled) => {
+                          updateConfig("chatAvatarEnabled", enabled);
+                          if (!enabled) updateConfig("chatAvatar", "");
+                        }}
+                      />
+                    </div>
+                  </EditorDndScope>
+                </Suspense>
               </TabsContent>
 
               {!isThirdPartyMode && (
