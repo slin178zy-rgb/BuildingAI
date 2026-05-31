@@ -25,6 +25,7 @@ services:
         networks:
             - buildingai-network
         <<: *resource-config
+        command: ["sh", "-c", "redis-server --requirepass ${REDIS_PASSWORD}"]
         healthcheck:
             test: ["CMD-SHELL", "redis-cli -a $$REDIS_PASSWORD ping"]
             interval: 10s
