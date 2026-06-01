@@ -58,7 +58,10 @@ const LoginPage = () => {
               <span className="text-xl font-bold">{websiteConfig?.webinfo.name}</span>
             </div>
           ) : (
-            <SvgIcons.buildingaiFull className="h-8" />
+            <div className="flex items-center gap-2">
+              <SvgIcons.buildingai className="h-8" />
+              <span className="text-xl font-bold">{websiteConfig?.webinfo.name}</span>
+            </div>
           )}
         </a>
         <LoginForm />
