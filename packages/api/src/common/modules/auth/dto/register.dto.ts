@@ -50,12 +50,11 @@ export class RegisterDto {
     nickname?: string;
 
     /**
-     * 邮箱（可选）
+     * 邮箱（必填）
      */
-    @IsOptional()
-    @ValidateIf((o) => o.email !== undefined && o.email !== "")
+    @IsNotEmpty({ message: "邮箱不能为空" })
     @IsEmail({}, { message: "邮箱格式不正确" })
-    email?: string;
+    email: string;
 
     /**
      * 手机号（可选）

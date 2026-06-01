@@ -86,7 +86,7 @@ const registerFormSchema = z
     password: z.string().min(6, { message: "密码至少6位" }),
     confirmPassword: z.string().min(6, { message: "确认密码至少6位" }),
     nickname: z.string().optional(),
-    email: z.string().email({ message: "邮箱格式不正确" }).optional().or(z.literal("")),
+    email: z.string().email({ message: "请输入有效的邮箱地址" }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "两次密码不一致",
@@ -529,8 +529,8 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
       password: values.password,
       confirmPassword: values.confirmPassword,
       terminal: 1,
+      email: values.email,
       ...(values.nickname && { nickname: values.nickname }),
-      ...(values.email && { email: values.email }),
     });
     setToken(data.token);
     handleRedirect(redirect || "/", data.token);
@@ -965,9 +965,9 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>邮箱（选填）</FormLabel>
+                <FormLabel>邮箱</FormLabel>
                 <FormControl>
-                  <Input type="email" placeholder="m@example.com" {...field} autoComplete="email" />
+                  <Input type="email" placeholder="请输入邮箱，用于找回密码和接收通知" {...field} autoComplete="email" />
                 </FormControl>
                 <FormMessage />
               </FormItem>

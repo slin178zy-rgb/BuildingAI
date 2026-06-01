@@ -189,13 +189,22 @@ export class AuthService extends BaseService<User> {
             throw HttpErrorFactory.badRequest("用户名已被占用", BusinessCode.USER_ALREADY_EXISTS);
         }
 
+        // 检查邮箱是否已存在
+        const existingEmail = await this.userRepository.findOne({
+            where: { email: registerDto.email },
+        });
+
+        if (existingEmail) {
+            throw HttpErrorFactory.badRequest("邮箱已被注册", BusinessCode.USER_ALREADY_EXISTS);
+        }
+
         // 加密密码
         const salt = await bcrypt.genSalt();
         const hashedPassword = await bcrypt.hash(registerDto.password, salt);
 
         const { nickname: generatedNickname, avatar } = this.generateRandomName();
         const nickname = registerDto.nickname?.trim() || generatedNickname;
-        const email = registerDto.email?.trim();
+        const email = registerDto.email.trim();
         const phone = registerDto.phone?.trim();
         const userNo = await generateNo(this.userRepository, "userNo");
         // 创建用户
@@ -204,7 +213,7 @@ export class AuthService extends BaseService<User> {
                 username: registerDto.username,
                 password: hashedPassword,
                 nickname,
-                email: email || undefined,
+                email,
                 phone: phone || undefined,
                 status: BooleanNumber.YES, // 默认启用
                 source: UserCreateSource.USERNAME,
