@@ -66,8 +66,8 @@ const TERMINAL_OPTIONS: {
   { label: "API端", value: ExtensionSupportTerminal.API, disabled: true },
 ];
 
-const THIRD_PARTY_PLATFORM_OPTIONS: { label: string; value: string }[] = [
-  { label: "不使用第三方平台", value: "" },
+const THIRD_PARTY_PLATFORM_OPTIONS: { label: string; value: string | null }[] = [
+  { label: "不使用第三方平台", value: null },
   { label: "阿里百炼（Bailian）", value: "bailian" },
   { label: "Coze（扣子）", value: "coze" },
   { label: "Dify", value: "dify" },
@@ -100,7 +100,7 @@ const formSchema = z.object({
     .optional(),
   authorName: z.string().max(100, "作者名称不能超过100个字符").optional(),
   icon: z.string().max(500, "图标地址不能超过500个字符").optional(),
-  thirdPartyPlatform: z.string().optional(),
+  thirdPartyPlatform: z.union([z.string(), z.null()]).optional(),
   thirdPartyConfig: z.object({
     apiKey: z.string().optional(),
     appId: z.string().optional(),
@@ -140,7 +140,7 @@ export const ExtensionFormDialog = ({
       version: "1.0.0",
       authorName: "",
       icon: "",
-      thirdPartyPlatform: "",
+      thirdPartyPlatform: null,
       thirdPartyConfig: {
         apiKey: "",
         appId: "",
@@ -169,7 +169,7 @@ export const ExtensionFormDialog = ({
           version: extension.version || "",
           authorName: extension.author?.name || "",
           icon: extension.icon || "",
-          thirdPartyPlatform: extension.config?.thirdPartyPlatform || "",
+          thirdPartyPlatform: extension.config?.thirdPartyPlatform || null,
           thirdPartyConfig: extension.config?.thirdPartyConfig || {
             apiKey: "",
             appId: "",
@@ -192,7 +192,7 @@ export const ExtensionFormDialog = ({
           version: "1.0.0",
           authorName: "",
           icon: "",
-          thirdPartyPlatform: "",
+          thirdPartyPlatform: null,
           thirdPartyConfig: {
             apiKey: "",
             appId: "",
