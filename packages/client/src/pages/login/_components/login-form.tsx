@@ -926,7 +926,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                <FormLabel>密码</FormLabel>
                 <FormControl>
                   <PasswordInput autoComplete="new-password" {...field} />
                 </FormControl>
@@ -949,12 +949,12 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
           />
           <FormField
             control={registerForm.control}
-            name="nickname"
+            name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>昵称（选填）</FormLabel>
+                <FormLabel>邮箱</FormLabel>
                 <FormControl>
-                  <Input type="text" placeholder="昵称" {...field} />
+                  <Input type="email" placeholder="请输入邮箱，用于找回密码和接收通知" {...field} autoComplete="email" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -962,12 +962,12 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
           />
           <FormField
             control={registerForm.control}
-            name="email"
+            name="nickname"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>邮箱</FormLabel>
+                <FormLabel>昵称（选填）</FormLabel>
                 <FormControl>
-                  <Input type="email" placeholder="请输入邮箱，用于找回密码和接收通知" {...field} autoComplete="email" />
+                  <Input type="text" placeholder="昵称" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
